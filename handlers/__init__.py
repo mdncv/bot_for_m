@@ -1,0 +1,1 @@
+from .handlers_registration import register_all_handlers
