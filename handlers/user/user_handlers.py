@@ -40,14 +40,14 @@ async def conversation_start(message: types.Message, state: FSMContext) -> None:
     await user_table_create_entry(message.chat.id)
     await user_table_close_poll(message.chat.id)
 
-    await message.answer('*Welcome to the mdncv_bot_v1.0.0!*\n\n'
+    await message.answer('*Welcome to the mdncv_bot_v1.0.1!*\n\n'
                          'This bot will help you learn new words in a quiz format.\n'
                          'Just add a few words along with the description, start the quiz and have fun!\n\n'
                          '_If you ever need to reset your language settings, type /start again._',
                          reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
 
     await FSMStart.start_learning_lang.set()
-    await message.answer('Please enter the name or code of the language you are about to learn.',
+    await message.answer('Please enter the name or code of the language you are about to learn:',
                          reply_markup=ReplyKeyboardRemove())
 
 
@@ -57,17 +57,17 @@ async def get_learning_lang(message: types.Message, state: FSMContext) -> None:
     lang_num = validate_language(lang)
 
     if not lang_num:
-        await message.answer(f'{lang.capitalize()} is not supported, default language is set (Turkish).',
-                             reply_markup=ReplyKeyboardRemove())
+        await message.answer(f'{lang.capitalize()} is not supported, default language is set _(Turkish)_.',
+                             reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
         lang_num = 32
 
     async with state.proxy() as langs:
         langs['learning'] = lang_num
 
     await FSMStart.next()
-    await message.answer('Please enter the name or code of your native language '
-                         '(Or the one in which you would like to receive examples).',
-                         reply_markup=ReplyKeyboardRemove())
+    await message.answer('Please enter the name or code of your native language:\n\n'
+                         '_(Or the one in which you would like to receive examples)_',
+                         reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
 
 
 async def get_native_lang(message: types.Message, state: FSMContext) -> None:
@@ -78,22 +78,22 @@ async def get_native_lang(message: types.Message, state: FSMContext) -> None:
     async with state.proxy() as langs:
 
         if not lang_num and langs['learning'] != 1:
-            await message.answer(f'{lang.capitalize()} is not supported, default language is set (English).',
-                                 reply_markup=ReplyKeyboardRemove())
+            await message.answer(f'{lang.capitalize()} is not supported.\n\nDefault language is set _(English)_.',
+                                 reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
             lang_num = 1
         elif not lang_num:
-            await message.answer(f'{lang.capitalize()} is not supported, default language is set (Russian).',
-                                 reply_markup=ReplyKeyboardRemove())
+            await message.answer(f'{lang.capitalize()} is not supported.\n\nDefault language is set _(Russian)_.',
+                                 reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
             lang_num = 2
         elif langs['learning'] == lang_num and langs['learning'] != 1:
-            await message.answer('The target language and native language do not have to match. '
-                                 'Default language is set (English).',
-                                 reply_markup=ReplyKeyboardRemove())
+            await message.answer('The target language and native language do not have to match.\n\n'
+                                 'Default language is set _(English)_.',
+                                 reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
             lang_num = 1
         elif langs['learning'] == lang_num:
-            await message.answer('The target language and native language do not have to match. '
-                                 'Default language is set (Russian).',
-                                 reply_markup=ReplyKeyboardRemove())
+            await message.answer('The target language and native language do not have to match.\n\n'
+                                 'Default language is set _(Russian)_.',
+                                 reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
             lang_num = 2
 
         await user_table_update_languages(message.chat.id, langs['learning'], lang_num)
@@ -144,7 +144,7 @@ async def go_to_menu(message: types.Message, state: FSMContext) -> None:
         await state.finish()
 
     await user_table_close_poll(message.chat.id)
-    await message.answer('Returning to main menu..', reply_markup=YKB.main_kb)
+    await message.answer('_Returning to main menu.._', reply_markup=YKB.main_kb, parse_mode='Markdown')
 
 
 # quiz start
@@ -153,18 +153,20 @@ async def quiz_start(message: types.Message) -> None:
     await user_table_close_poll(message.chat.id)
 
     if not await user_table_check_entry(message.chat.id):
-        await message.answer('Please restart the bot, some trouble happened.', reply_markup=YKB.restart_kb)
+        await message.answer('Please restart the bot, some trouble happened.',
+                             reply_markup=YKB.restart_kb)
         return
 
     if await dictionary_table_get_size(message.chat.id) < 2:
-        await message.answer('Add words to quiz.', reply_markup=YKB.quiz_kb)
+        await message.answer('Please add words to quiz.', reply_markup=YKB.go_to_menu_kb)
         return
 
     gqo = await get_quiz_options(message.chat.id)
 
     current_poll = await TelegramBot.bot.send_poll(message.chat.id, question=gqo['question'],
                                                    options=gqo['question_options'], is_anonymous=False, type='quiz',
-                                                   correct_option_id=gqo['correct_option'], reply_markup=YKB.quiz_kb)
+                                                   correct_option_id=gqo['correct_option'],
+                                                   reply_markup=YKB.go_to_menu_kb)
 
     await user_table_add_poll(message.chat.id, current_poll.poll.id, gqo['correct_option'], gqo['word'])
 
@@ -177,7 +179,8 @@ async def handle_poll_answer(quiz_answer: PollAnswer) -> None:
         return
 
     if not await user_table_check_poll_existence(quiz_answer.poll_id):
-        await TelegramBot.bot.send_message(quiz_answer.user.id, 'Old polls do not work and do not affect statistics.')
+        await TelegramBot.bot.send_message(quiz_answer.user.id, '_Old polls do not work and do not affect statistics._',
+                                           parse_mode='Markdown')
         # if the current quiz is considered old
         # user_table_close_poll(quiz_answer.user.id)
         return
@@ -196,14 +199,16 @@ async def handle_poll_answer(quiz_answer: PollAnswer) -> None:
     await user_table_close_poll(quiz_answer.user.id)
 
     if await dictionary_table_get_size(quiz_answer.user.id) < 2:
-        await TelegramBot.bot.send_message(quiz_answer.user.id, 'Add words to quiz.', reply_markup=YKB.quiz_kb)
+        await TelegramBot.bot.send_message(quiz_answer.user.id, 'Please add words to quiz.',
+                                           reply_markup=YKB.go_to_menu_kb)
         return
 
     gqo = await get_quiz_options(quiz_answer.user.id)
 
     current_poll = await TelegramBot.bot.send_poll(quiz_answer.user.id, question=gqo['question'],
                                                    options=gqo['question_options'], is_anonymous=False, type='quiz',
-                                                   correct_option_id=gqo['correct_option'], reply_markup=YKB.quiz_kb)
+                                                   correct_option_id=gqo['correct_option'],
+                                                   reply_markup=YKB.go_to_menu_kb)
 
     await user_table_add_poll(quiz_answer.user.id, current_poll.poll.id, gqo['correct_option'], gqo['word'])
 
@@ -219,10 +224,10 @@ async def stats_track(message: types.Message) -> None:
 
     gqs = await get_quiz_stats(message.chat.id)
 
-    await message.answer(f'Correct answers count: {gqs["cor"]}\nIncorrect answers count: {gqs["inc"]}\n'
-                         f'Total answers count: {gqs["cor"] + gqs["inc"]}\n\n'
-                         f'Current correct answer percentage: {gqs["perc"]}%',
-                         reply_markup=YKB.quiz_kb)
+    await message.answer(f'_Correct answers count:_ {gqs["cor"]}\n_Incorrect answers count:_ {gqs["inc"]}\n'
+                         f'_Total answers count:_ {gqs["cor"] + gqs["inc"]}\n\n'
+                         f'*Current correct answer percentage:* {gqs["perc"]}%',
+                         reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
 
 
 # adding word section
@@ -230,7 +235,8 @@ async def add_word(message: types.Message) -> None:
 
     await FSMAdd.addition_word.set()
     await user_table_close_poll(message.chat.id)
-    await message.answer('What word do you want to add?', reply_markup=ReplyKeyboardRemove())
+    await message.answer('What word do you want to add?\n\n_(The maximum word length is 50 characters)_',
+                         reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
 
 
 async def get_word_to_add(message: types.Message, state: FSMContext) -> None:
@@ -241,11 +247,14 @@ async def get_word_to_add(message: types.Message, state: FSMContext) -> None:
         word['addition_word'] = normalized_word
 
     if await dictionary_table_check_entry_existence(normalized_word, message.chat.id):
-        await message.answer(f'The word \"{normalized_word}\" is already in dictionary.', reply_markup=YKB.quiz_kb)
+        await message.answer(f'The word *\"{normalized_word}\"* is already in dictionary.',
+                             reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
         await state.finish()
     else:
         await FSMAdd.next()
-        await message.answer(f'What is the \"{normalized_word}\" word\'s description?')
+        await message.answer(f'What is the *\"{normalized_word}\"* word\'s description?\n\n'
+                             f'_(The maximum description length is 50 characters)_',
+                             reply_markup=ReplyKeyboardRemove(), parse_mode='Markdown')
 
 
 async def get_added_words_description(message: types.Message, state: FSMContext) -> None:
@@ -255,8 +264,8 @@ async def get_added_words_description(message: types.Message, state: FSMContext)
     async with state.proxy() as word:
         await dictionary_table_add_entry(word['addition_word'], normalized_description, message.chat.id)
         await message.answer(
-            f'Word \"{word["addition_word"]}\" with description \"{normalized_description}\" appended.',
-            reply_markup=YKB.quiz_kb)
+            f'Word *\"{word["addition_word"]}\"* with description *\"{normalized_description}\"* appended.',
+            reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
 
     await state.finish()
 
@@ -278,9 +287,11 @@ async def get_word_to_remove(message: types.Message, state: FSMContext) -> None:
 
     if await dictionary_table_check_entry_existence(normalized_word, message.chat.id):
         await FSMRemove.next()
-        await message.answer(f'The word \"{normalized_word}\" will be removed, are you sure?', reply_markup=YKB.yn_kb)
+        await message.answer(f'The word *\"{normalized_word}\"* will be removed, are you sure?',
+                             reply_markup=YKB.yn_kb, parse_mode='Markdown')
     else:
-        await message.answer(f'The word \"{normalized_word}\" is not in dictionary.', reply_markup=YKB.quiz_kb)
+        await message.answer(f'The word *\"{normalized_word}\"* is not in dictionary.',
+                             reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
         await state.finish()
 
 
@@ -288,7 +299,8 @@ async def remove_word_y(message: types.Message, state: FSMContext) -> None:
 
     async with state.proxy() as word:
         await dictionary_table_delete_entry(word['remove_word'], message.chat.id)
-        await message.answer(f'The word \"{word["remove_word"]}\" had been removed.', reply_markup=YKB.quiz_kb)
+        await message.answer(f'The word *\"{word["remove_word"]}\"* had been removed.',
+                             reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
 
     await state.finish()
 
@@ -296,7 +308,8 @@ async def remove_word_y(message: types.Message, state: FSMContext) -> None:
 async def remove_word_n(message: types.Message, state: FSMContext) -> None:
 
     async with state.proxy() as word:
-        await message.answer(f'The word \"{word["remove_word"]}\" had not been removed.', reply_markup=YKB.quiz_kb)
+        await message.answer(f'The word *\"{word["remove_word"]}\"* had not been removed.',
+                             reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
 
     await state.finish()
 

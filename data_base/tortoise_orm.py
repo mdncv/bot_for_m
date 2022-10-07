@@ -17,7 +17,7 @@ class ORM:
     async def orm_init(cls, dispatcher: Dispatcher = None) -> None:
 
         try:
-            await cls.TORTOISE_ORM.init(**EnvironmentKeys.DATA_BASE_SETTINGS)
+            await cls.TORTOISE_ORM.init(config=EnvironmentKeys.DATA_BASE_SETTINGS)
             await cls.TORTOISE_ORM.generate_schemas()
             print('INFO:tortoise:Tortoise-ORM connected.', file=sys.stderr)
         except ConfigurationError:

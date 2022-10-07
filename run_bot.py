@@ -3,7 +3,7 @@ from aiogram import Dispatcher
 import logging
 
 from bot import TelegramBot
-from configuration import setup_everything
+from setup import setup_everything
 from handlers import register_all_handlers
 
 

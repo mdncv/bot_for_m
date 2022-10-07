@@ -4,13 +4,13 @@ from tortoise import fields
 
 class UserTable(Model):
 
-    id = fields.IntField(pk=True)
-    user_id = fields.IntField(unique=True)
-    poll_id = fields.IntField()
+    id = fields.BigIntField(pk=True)
+    user_id = fields.BigIntField(unique=True)
+    poll_id = fields.BigIntField()
     correct_answer_id = fields.IntField()
     word = fields.CharField(max_length=50)
-    correct_answers = fields.IntField()
-    incorrect_answers = fields.IntField()
+    correct_answers = fields.BigIntField()
+    incorrect_answers = fields.BigIntField()
     learning_lang = fields.IntField()
     native_lang = fields.IntField()
 
@@ -20,8 +20,8 @@ class UserTable(Model):
 
 class DictTable(Model):
 
-    id = fields.IntField(pk=True)
-    user_id = fields.IntField()
+    id = fields.BigIntField(pk=True)
+    user_id = fields.BigIntField()
     word = fields.CharField(max_length=50)
     description = fields.CharField(max_length=50)
 

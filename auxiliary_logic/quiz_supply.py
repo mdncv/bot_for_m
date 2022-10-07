@@ -40,7 +40,9 @@ def normalize_word(phrase: str) -> str:
     processed_phrase = pattern1.sub('-', processed_phrase)
 
     pattern2 = re.compile(r'[\n ]+')
-    return '' + ' '.join(pattern2.split(processed_phrase.lower()))
+    processed_phrase = ' '.join(pattern2.split(processed_phrase.lower()))
+
+    return '' + (processed_phrase[:50] if len(processed_phrase) > 50 else processed_phrase)
 
 
 def validate_language(lang: str) -> int:
