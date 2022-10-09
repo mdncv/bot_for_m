@@ -1,7 +1,7 @@
 from tortoise import run_async
 from tortoise.contrib.sqlite.functions import Random
 
-from data_base.models import UserTable, DictTable, Cheers
+from orm.models import UserTable, DictTable, Cheers
 
 
 # Working with user table

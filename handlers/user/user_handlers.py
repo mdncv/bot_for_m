@@ -7,7 +7,7 @@ from aiogram.types import ReplyKeyboardRemove, PollAnswer
 from keyboards import YKB
 from auxiliary_logic import (get_quiz_options, get_quiz_stats, get_examples, user_table_add_default_entries,
                              normalize_word, validate_language)
-from data_base.db_interface import *
+from orm.orm_interface import *
 from bot import TelegramBot
 
 

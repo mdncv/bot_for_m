@@ -8,8 +8,8 @@ from bs4 import BeautifulSoup
 
 from .supported_languages import Languages
 from .cheers import Cheers
-from data_base.db_interface import (dictionary_table_read_entries, user_table_read_stats,
-                                    dictionary_table_add_entry, cheers_table_add_entry)
+from orm.orm_interface import (dictionary_table_read_entries, user_table_read_stats,
+                               dictionary_table_add_entry, cheers_table_add_entry)
 
 
 async def get_quiz_options(user_id: int) -> dict:

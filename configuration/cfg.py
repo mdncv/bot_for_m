@@ -19,6 +19,6 @@ class EnvironmentKeys:
     POSTGRES_URI = f'postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
 
     DATA_BASE_SETTINGS: Final = dict(connections={'default': POSTGRES_URI},
-                                     apps={'models': {'models': ['data_base.models.tortoise_orm_models'],
+                                     apps={'models': {'models': ['orm.models.tortoise_orm_models'],
                                                       'default_connection': 'default'}
                                            })
