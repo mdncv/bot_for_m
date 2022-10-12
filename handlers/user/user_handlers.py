@@ -5,8 +5,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardRemove, PollAnswer
 
 from keyboards import YKB
-from auxiliary_logic import (get_quiz_options, get_quiz_stats, get_examples, user_table_add_default_entries,
-                             normalize_word, validate_language)
+from auxiliary_logic import manage_quiz_options, get_examples, normalize_word, validate_language
 from orm.orm_interface import *
 from bot import TelegramBot
 
@@ -98,8 +97,8 @@ async def get_native_lang(message: types.Message, state: FSMContext) -> None:
 
         await user_table_update_languages(message.chat.id, langs['learning'], lang_num)
 
-        if await dictionary_table_get_size(message.chat.id) == 0:
-            await user_table_add_default_entries(message.chat.id, langs['learning'], lang_num)
+        if len(await dictionary_table_read_entries(message.chat.id)) == 0:
+            await dictionary_table_add_default_entries(message.chat.id, langs['learning'], lang_num)
             await message.answer('Setup complete, have fun!', reply_markup=YKB.main_kb)
             await state.finish()
             return
@@ -119,8 +118,8 @@ async def delete_words_1y(message: types.Message, state: FSMContext) -> None:
 async def delete_words_n(message: types.Message, state: FSMContext) -> None:
 
     async with state.proxy() as langs:
-        if await dictionary_table_get_size(message.chat.id) == 0:
-            await user_table_add_default_entries(message.chat.id, langs['learning'], langs['native'])
+        if len(await dictionary_table_read_entries(message.chat.id)) == 0:
+            await dictionary_table_add_default_entries(message.chat.id, langs['learning'], langs['native'])
 
     await state.finish()
     await message.answer('Setup complete, have fun!', reply_markup=YKB.main_kb)
@@ -130,9 +129,10 @@ async def delete_words_2y(message: types.Message, state: FSMContext) -> None:
 
     async with state.proxy() as langs:
         await dictionary_table_delete_user_entries(message.chat.id)
-        await user_table_add_default_entries(message.chat.id, langs['learning'], langs['native'])
-        await state.finish()
-        await message.answer('Setup complete, have fun!', reply_markup=YKB.main_kb)
+        await dictionary_table_add_default_entries(message.chat.id, langs['learning'], langs['native'])
+
+    await state.finish()
+    await message.answer('Setup complete, have fun!', reply_markup=YKB.main_kb)
 
 
 # return to menu
@@ -151,66 +151,73 @@ async def go_to_menu(message: types.Message, state: FSMContext) -> None:
 async def quiz_start(message: types.Message) -> None:
 
     await user_table_close_poll(message.chat.id)
+    ut_entry = await user_table_read_entry(message.chat.id)
 
-    if not await user_table_check_entry(message.chat.id):
+    if not ut_entry:
         await message.answer('Please restart the bot, some trouble happened.',
                              reply_markup=YKB.restart_kb)
         return
 
-    if await dictionary_table_get_size(message.chat.id) < 2:
+    quiz_options = await dictionary_table_read_entries(message.chat.id)
+
+    if len(quiz_options) < 2:
         await message.answer('Please add words to quiz.', reply_markup=YKB.go_to_menu_kb)
         return
 
-    gqo = await get_quiz_options(message.chat.id)
+    mqo = manage_quiz_options(quiz_options)
 
-    current_poll = await TelegramBot.bot.send_poll(message.chat.id, question=gqo['question'],
-                                                   options=gqo['question_options'], is_anonymous=False, type='quiz',
-                                                   correct_option_id=gqo['correct_option'],
+    current_poll = await TelegramBot.bot.send_poll(message.chat.id, question=mqo['question'],
+                                                   options=mqo['options'], is_anonymous=False, type='quiz',
+                                                   correct_option_id=mqo['correct_option_id'],
                                                    reply_markup=YKB.go_to_menu_kb)
+    ut_entry['poll_id'] = int(current_poll.poll.id)
+    ut_entry['correct_option_id'] = mqo['correct_option_id']
+    ut_entry['word'] = mqo['word']
 
-    await user_table_add_poll(message.chat.id, current_poll.poll.id, gqo['correct_option'], gqo['word'])
+    await user_table_rewrite_entry(**ut_entry)
 
 
 async def handle_poll_answer(quiz_answer: PollAnswer) -> None:
 
-    if not await user_table_check_entry(quiz_answer.user.id):
+    ut_entry = await user_table_read_entry(quiz_answer.user.id)
+
+    if not ut_entry:
         await TelegramBot.bot.send_message(quiz_answer.user.id, 'Please restart the bot, some trouble happened.',
                                            reply_markup=YKB.restart_kb)
         return
-
-    if not await user_table_check_poll_existence(quiz_answer.poll_id):
+    if ut_entry['poll_id'] != int(quiz_answer.poll_id):
         await TelegramBot.bot.send_message(quiz_answer.user.id, '_Old polls do not work and do not affect statistics._',
                                            parse_mode='Markdown')
-        # if the current quiz is considered old
-        # user_table_close_poll(quiz_answer.user.id)
+        # if the current quiz is considered old after this
+        # await user_table_close_poll(quiz_answer.user.id)
         return
 
-    atre = await user_table_read_entry(quiz_answer.poll_id)
-
-    if atre['correct_option'] == quiz_answer.option_ids[0]:
-        await user_table_increase_stats(quiz_answer.user.id)
+    if ut_entry['correct_option_id'] == quiz_answer.option_ids[0]:
+        ut_entry['correct_answers'] += 1
         await TelegramBot.bot.send_message(quiz_answer.user.id, await cheers_table_get_entry(True))
     else:
-        await user_table_decrease_stats(quiz_answer.user.id)
+        ut_entry['incorrect_answers'] += 1
         await TelegramBot.bot.send_message(quiz_answer.user.id, await cheers_table_get_entry(False))
-        examples = await get_examples(atre['word'], atre['learning_lang'], atre['native_lang'])
+        examples = await get_examples(ut_entry['word'], ut_entry['learning_lang'], ut_entry['native_lang'])
         await TelegramBot.bot.send_message(quiz_answer.user.id, examples, parse_mode='Markdown')
 
-    await user_table_close_poll(quiz_answer.user.id)
+    quiz_options = await dictionary_table_read_entries(quiz_answer.user.id)
 
-    if await dictionary_table_get_size(quiz_answer.user.id) < 2:
-        await TelegramBot.bot.send_message(quiz_answer.user.id, 'Please add words to quiz.',
-                                           reply_markup=YKB.go_to_menu_kb)
+    if len(quiz_options) < 2:
+        await TelegramBot.bot.send_message('Please add words to quiz.', reply_markup=YKB.go_to_menu_kb)
         return
 
-    gqo = await get_quiz_options(quiz_answer.user.id)
+    mqo = manage_quiz_options(quiz_options)
 
-    current_poll = await TelegramBot.bot.send_poll(quiz_answer.user.id, question=gqo['question'],
-                                                   options=gqo['question_options'], is_anonymous=False, type='quiz',
-                                                   correct_option_id=gqo['correct_option'],
+    current_poll = await TelegramBot.bot.send_poll(quiz_answer.user.id, question=mqo['question'],
+                                                   options=mqo['options'], is_anonymous=False, type='quiz',
+                                                   correct_option_id=mqo['correct_option_id'],
                                                    reply_markup=YKB.go_to_menu_kb)
+    ut_entry['poll_id'] = int(current_poll.poll.id)
+    ut_entry['correct_option_id'] = mqo['correct_option_id']
+    ut_entry['word'] = mqo['word']
 
-    await user_table_add_poll(quiz_answer.user.id, current_poll.poll.id, gqo['correct_option'], gqo['word'])
+    await user_table_rewrite_entry(**ut_entry)
 
 
 # quiz statistics
@@ -218,15 +225,18 @@ async def stats_track(message: types.Message) -> None:
 
     await user_table_close_poll(message.chat.id)
 
-    if not await user_table_check_entry(message.chat.id):
+    ut_entry = await user_table_read_entry(message.chat.id)
+
+    if not ut_entry:
         await message.answer('Please restart the bot, some trouble happened.', reply_markup=YKB.restart_kb)
         return
 
-    gqs = await get_quiz_stats(message.chat.id)
+    correct, incorrect = ut_entry['correct_answers'], ut_entry['incorrect_answers']
+    percentage = round(correct * 100 / (correct + incorrect), 2) if (correct + incorrect) != 0 else 0
 
-    await message.answer(f'_Correct answers count:_ {gqs["cor"]}\n_Incorrect answers count:_ {gqs["inc"]}\n'
-                         f'_Total answers count:_ {gqs["cor"] + gqs["inc"]}\n\n'
-                         f'*Current correct answer percentage:* {gqs["perc"]}%',
+    await message.answer(f'_Correct answers count:_ {correct}\n_Incorrect answers count:_ {incorrect}\n'
+                         f'_Total answers count:_ {correct + incorrect}\n\n'
+                         f'*Current correct answer percentage:* {percentage}%',
                          reply_markup=YKB.go_to_menu_kb, parse_mode='Markdown')
 
 

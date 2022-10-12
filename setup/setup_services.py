@@ -1,8 +1,8 @@
 from aiogram import Dispatcher
 from aiogram.utils.executor import Executor
 
-from auxiliary_logic.quiz_supply import cheers_table_add_default_entries
 from orm import ORM
+from orm.orm_interface import cheers_table_add_default_entries
 from redis import Storage
 
 

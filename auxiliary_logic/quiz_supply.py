@@ -8,41 +8,30 @@ from bs4 import BeautifulSoup
 
 from .supported_languages import Languages
 from .cheers import Cheers
-from orm.orm_interface import (dictionary_table_read_entries, user_table_read_stats,
-                               dictionary_table_add_entry, cheers_table_add_entry)
 
 
-async def get_quiz_options(user_id: int) -> dict:
+def manage_quiz_options(quiz_options: list) -> dict:
 
-    intermediate_crutch = await dictionary_table_read_entries(user_id)
-    correct_option_id = randrange(len(intermediate_crutch))
-    new_word = intermediate_crutch[correct_option_id][0]
-    new_question_options = [option[1] for option in intermediate_crutch]
+    correct_option_id = randrange(len(quiz_options))
+    new_word = quiz_options[correct_option_id][0]
+    options = [option[1] for option in quiz_options]
     new_question = 'Choose correct translation for word ' + new_word + ':'
 
-    return dict(word=new_word, question=new_question, correct_option=correct_option_id,
-                question_options=new_question_options)
-
-
-async def get_quiz_stats(user_id: int) -> dict:
-
-    correct, incorrect = await user_table_read_stats(user_id)
-    percentage = round(correct * 100 / (correct + incorrect), 2) if (correct + incorrect) != 0 else 0
-
-    return dict(cor=correct, inc=incorrect, perc=percentage)
+    return dict(word=new_word, question=new_question, correct_option_id=correct_option_id, options=options)
 
 
 def normalize_word(phrase: str) -> str:
 
-    processed_phrase = phrase.translate(str.maketrans('', '', '!\"#×÷€£¥$%&\'()*+,./:;<=>?@[\]^_`{|}~1234567890'))
+    processed_phrase = re.sub(r'[!\"#×÷€£¥$%&\'()*+,./:;<=>?@\[\]^_`{|}~\d]+', '', phrase)
+    processed_phrase = re.sub(r'\s{2,}', ' ', processed_phrase)
+    processed_phrase = re.sub(r'-+[\s-]*-', '-', processed_phrase)
+    processed_phrase = re.sub(r'-[\s-]*\s', '- ', processed_phrase)
+    processed_phrase = re.sub(r'\s[\s-]*-', ' -', processed_phrase)
+    processed_phrase = re.sub(r'\s+-[\s-]*\s', ' - ', processed_phrase)
+    processed_phrase = processed_phrase.strip()
+    processed_phrase = processed_phrase[:50] if len(processed_phrase) > 50 else processed_phrase
 
-    pattern1 = re.compile(r'-{2,}')
-    processed_phrase = pattern1.sub('-', processed_phrase)
-
-    pattern2 = re.compile(r'[\n ]+')
-    processed_phrase = ' '.join(pattern2.split(processed_phrase.lower()))
-
-    return '' + (processed_phrase[:50] if len(processed_phrase) > 50 else processed_phrase)
+    return processed_phrase.lower()
 
 
 def validate_language(lang: str) -> int:
@@ -100,7 +89,11 @@ async def get_examples(word: str, learning_lang: int = 32, native_lang: int = 1)
     return f'Unfortunately can\'t find any examples with the word {word}.'
 
 
-async def user_table_add_default_entries(user_id: int, learning_lang: int = 32, native_lang: int = 1) -> None:
+def get_cheers() -> dict:
+    return Cheers.CHEERS
+
+
+def get_default_options(learning_lang: int = 32, native_lang: int = 1) -> tuple:
 
     if native_lang != 1:
         intermediate_crutch = (('one', 'two', 'three', 'there'), ('1', '2', '3', '->'))
@@ -110,14 +103,7 @@ async def user_table_add_default_entries(user_id: int, learning_lang: int = 32, 
     learning_sample = Languages.DEFAULT_OPTIONS.get(learning_lang, intermediate_crutch[0])
     native_sample = Languages.DEFAULT_OPTIONS.get(native_lang, intermediate_crutch[1])
 
-    for word, description in zip(learning_sample, native_sample):
-        await dictionary_table_add_entry(word.capitalize(), description.capitalize(), user_id)
-
-
-async def cheers_table_add_default_entries() -> None:
-
-    for cheer, not_cheer in Cheers.CHEERS.items():
-        await cheers_table_add_entry(cheer, not_cheer)
+    return tuple(zip(learning_sample, native_sample))
 
 
 def main():

@@ -7,7 +7,7 @@ class UserTable(Model):
     id = fields.BigIntField(pk=True)
     user_id = fields.BigIntField(unique=True)
     poll_id = fields.BigIntField()
-    correct_answer_id = fields.IntField()
+    correct_option_id = fields.IntField()
     word = fields.CharField(max_length=50)
     correct_answers = fields.BigIntField()
     incorrect_answers = fields.BigIntField()
