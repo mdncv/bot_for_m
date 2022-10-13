@@ -2,7 +2,6 @@ from typing import Final
 
 
 class Languages:
-
     MULTITRAN: Final = {
         'english': 1, 'eng': 1, 'en': 1,
         'russian': 2, 'rus': 2, 'ru': 2,
@@ -148,7 +147,6 @@ class Languages:
         'mbwera': 471, 'gronings': 472, 'hadza': 473, 'iraqw': 474, 'kami': 475, 'krio': 476, 'tweants': 477,
         'abaza': 478, 'украинский 1': 479
     }
-
     DEFAULT_OPTIONS: Final = {
         1: ('one', 'two', 'three', 'there'),
         2: ('один', 'два', 'три', 'там'),

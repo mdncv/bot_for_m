@@ -3,7 +3,6 @@ from typing import Final
 
 
 class EnvironmentKeys:
-
     TELEGRAM_BOT_TOKEN: Final = os.getenv('TOKEN', 'token_not_defined')
 
     REDIS_SETTINGS: Final = dict(host=os.getenv('REDIS_HOST', default='localhost'),
@@ -17,7 +16,6 @@ class EnvironmentKeys:
     POSTGRES_USER = os.getenv('POSTGRES_USER', default='postgres')
     POSTGRES_DB = os.getenv('POSTGRES_DB', default='postgres')
     POSTGRES_URI = f'postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}'
-
     DATA_BASE_SETTINGS: Final = dict(connections={'default': POSTGRES_URI},
                                      apps={'models': {'models': ['orm.models.tortoise_orm_models'],
                                                       'default_connection': 'default'}

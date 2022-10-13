@@ -1,4 +1,3 @@
-from tortoise import run_async
 from tortoise.contrib.sqlite.functions import Random
 
 from orm.models import UserTable, DictTable, Cheers
@@ -8,17 +7,14 @@ from auxiliary_logic import get_cheers, get_default_options
 # Working with user table
 
 async def user_table_create_entry(user_id: int) -> None:
-
     defaults = dict(poll_id=0, correct_option_id=0, word='', correct_answers=0, incorrect_answers=0, learning_lang=32,
                     native_lang=1)
     await UserTable.update_or_create(user_id=user_id, defaults=defaults)
 
 
 async def user_table_read_entry(user_id: int) -> dict:
-
     user = await UserTable.get_or_none(user_id=user_id)
-
-    if user:
+    if user is not None:
         return dict(user_id=user.user_id, poll_id=user.poll_id, correct_option_id=user.correct_option_id,
                     word=user.word, correct_answers=user.correct_answers, incorrect_answers=user.incorrect_answers,
                     learning_lang=user.learning_lang, native_lang=user.native_lang)
@@ -46,7 +42,6 @@ async def dictionary_table_add_entry(word: str, description: str, user_id: int) 
 
 
 async def dictionary_table_add_default_entries(user_id: int, learning_lang: int = 32, native_lang: int = 1) -> None:
-
     for word, description in get_default_options(learning_lang, native_lang):
         await dictionary_table_add_entry(word.capitalize(), description.capitalize(), user_id)
 
@@ -56,9 +51,7 @@ async def dictionary_table_check_entry_existence(word: str, user_id: int) -> boo
 
 
 async def dictionary_table_read_entries(user_id: int) -> list:
-
     words = await DictTable.filter(user_id=user_id).annotate(order=Random()).order_by('order').limit(4)
-
     return [(word.word, word.description) for word in words]
 
 
@@ -77,7 +70,6 @@ async def cheers_table_add_entry(cheer: str, not_cheer: str) -> None:
 
 
 async def cheers_table_add_default_entries() -> None:
-
     for cheer, not_cheer in get_cheers().items():
         await cheers_table_add_entry(cheer, not_cheer)
 
@@ -85,12 +77,3 @@ async def cheers_table_add_default_entries() -> None:
 async def cheers_table_get_entry(regime: bool) -> str:
     cheer = await Cheers.annotate(order=Random()).order_by('order').first()
     return cheer.cheer if regime else cheer.not_cheer
-
-
-async def main():
-    pass
-
-
-if __name__ == '__main__':
-
-    run_async(main())

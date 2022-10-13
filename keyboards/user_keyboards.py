@@ -4,7 +4,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
 class YKB:
-
     m_b1: Final = KeyboardButton('/quiz')
     m_b2: Final = KeyboardButton('/add')
     m_b3: Final = KeyboardButton('/remove')

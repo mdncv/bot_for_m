@@ -7,11 +7,9 @@ from configuration import EnvironmentKeys
 
 
 class Storage:
-
     FSM_STORAGE: Final = RedisStorage2(**EnvironmentKeys.REDIS_SETTINGS)
 
     @staticmethod
     async def redis_shutdown(dispatcher: Dispatcher) -> None:
-
         await dispatcher.storage.close()
         await dispatcher.storage.wait_closed()

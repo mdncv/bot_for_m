@@ -8,7 +8,6 @@ from handlers import register_all_handlers
 
 
 def main(dp: Dispatcher) -> None:
-
     logging.basicConfig(level=logging.INFO)
     setup_everything(TelegramBot.executor)
     register_all_handlers(dp)

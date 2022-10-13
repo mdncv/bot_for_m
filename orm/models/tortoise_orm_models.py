@@ -3,7 +3,6 @@ from tortoise import fields
 
 
 class UserTable(Model):
-
     id = fields.BigIntField(pk=True)
     user_id = fields.BigIntField(unique=True)
     poll_id = fields.BigIntField()
@@ -19,7 +18,6 @@ class UserTable(Model):
 
 
 class DictTable(Model):
-
     id = fields.BigIntField(pk=True)
     user_id = fields.BigIntField()
     word = fields.CharField(max_length=50)
@@ -30,7 +28,6 @@ class DictTable(Model):
 
 
 class Cheers(Model):
-
     id = fields.IntField(pk=True)
     cheer = fields.CharField(unique=True, max_length=50)
     not_cheer = fields.CharField(unique=True, max_length=50)
