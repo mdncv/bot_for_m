@@ -188,8 +188,11 @@ async def handle_poll_answer(quiz_answer: PollAnswer) -> None:
     else:
         ut_entry['incorrect_answers'] += 1
         await TelegramBot.bot.send_message(quiz_answer.user.id, await cheers_table_get_entry(False))
-        examples = await get_examples(ut_entry['word'], ut_entry['learning_lang'], ut_entry['native_lang'])
-        await TelegramBot.bot.send_message(quiz_answer.user.id, examples, parse_mode='Markdown')
+        await TelegramBot.bot.send_message(quiz_answer.user.id,
+                                           await get_examples(ut_entry['word'],
+                                                              ut_entry['learning_lang'],
+                                                              ut_entry['native_lang']),
+                                           parse_mode='Markdown')
 
     await do_quiz_magic(quiz_answer.user.id, ut_entry)
 

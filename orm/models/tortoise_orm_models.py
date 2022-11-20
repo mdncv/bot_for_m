@@ -16,6 +16,11 @@ class UserTable(Model):
     def __str__(self):
         return 'User with id ' + self.user_id
 
+    def __dict__(self):
+        return dict(user_id=self.user_id, poll_id=self.poll_id, correct_option_id=self.correct_option_id,
+                    word=self.word, correct_answers=self.correct_answers, incorrect_answers=self.incorrect_answers,
+                    learning_lang=self.learning_lang, native_lang=self.native_lang)
+
 
 class DictTable(Model):
     id = fields.BigIntField(pk=True)

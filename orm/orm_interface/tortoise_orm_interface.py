@@ -1,4 +1,4 @@
-from tortoise.contrib.sqlite.functions import Random
+from tortoise.contrib.postgres.functions import Random
 
 from orm.models import UserTable, DictTable, Cheers
 from auxiliary_logic import get_cheers, get_default_options
@@ -15,9 +15,7 @@ async def user_table_create_entry(user_id: int) -> None:
 async def user_table_read_entry(user_id: int) -> dict:
     user = await UserTable.get_or_none(user_id=user_id)
     if user is not None:
-        return dict(user_id=user.user_id, poll_id=user.poll_id, correct_option_id=user.correct_option_id,
-                    word=user.word, correct_answers=user.correct_answers, incorrect_answers=user.incorrect_answers,
-                    learning_lang=user.learning_lang, native_lang=user.native_lang)
+        return dict(user)
     return {}
 
 
