@@ -6,7 +6,7 @@ from orm.orm_interface import cheers_table_add_default_entries
 from redis import Storage
 
 
-async def services_startup(dispatcher: Dispatcher) -> None:
+async def services_startup(*args, **kwargs) -> None:
     await ORM.orm_init()
     await cheers_table_add_default_entries()
 

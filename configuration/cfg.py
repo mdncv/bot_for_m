@@ -5,12 +5,12 @@ from typing import Final
 class EnvironmentKeys:
     TELEGRAM_BOT_TOKEN: Final = os.getenv('TOKEN', 'token_not_defined')
 
-    REDIS_SETTINGS: Final = dict(host=os.getenv('REDIS_HOST', default='localhost'),
+    REDIS_SETTINGS: Final = dict(host=os.getenv('REDIS_HOST', default='redis'),
                                  port=os.getenv('REDIS_PORT', default=6379),
                                  db=os.getenv('REDIS_DB', default=0),
                                  prefix=os.getenv('REDIS_PREFIX', default='fsm'))
 
-    POSTGRES_HOST = os.getenv('POSTGRES_HOST', default='localhost')
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST', default='postgres')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', default=5432)
     POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD', default='1234')
     POSTGRES_USER = os.getenv('POSTGRES_USER', default='postgres')
