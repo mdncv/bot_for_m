@@ -1,20 +1,27 @@
 version: "3.9"
 
+networks:
+  bot:
+
 services:
 
   postgres:
-    image: postgres
+    image: postgres:14
     container_name: database
-    restart: always
+    restart: unless-stopped
     volumes:
-      - ./database:/var/lib/postgresql/data
+      - ./database/data:/var/lib/postgresql/data
     env_file:
       - .env
+    networks:
+      - bot
 
   redis:
     image: redis
     container_name: fsm
-    restart: always
+    restart: unless-stopped
+    networks:
+      - bot
 
   bot:
     build: .
@@ -23,6 +30,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
     command: python run_bot.py
+    networks:
+      - bot
