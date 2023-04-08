@@ -10,7 +10,7 @@ quiz format.
 
 1. ```cd``` to an acceptable directory for this project.
 
-2. Clone repository to the directory using ```git-scm```:
+2. Clone repository to the directory using [git](https://git-scm.com/):
 
 ```bash
 git clone https://github.com/mdncv/bot_for_m.git
@@ -33,20 +33,20 @@ Variables of configuration:
 |||||
 | REDIS_HOST        | String | "redis"                        | Redis host         |
 
-P.S. _For the love of God, please use **strong** passwords._  
+P.S. _For the love of God, use **strong** passwords por favor._  
 P.P.S. _These hosts examples are for docker-compose 
 use only. Use the standard option 
 (something like **127.0.0.1** or **0.0.0.0**) in case 
 you are running services separately._
 
-4. Run services using ```docker-compose```:
+4. Run services using [docker-compose](https://docs.docker.com/compose/):
 
 ```bash
 docker-compose up -d --build
 ```
 
 P.S. _Use ```sudo``` to fix the error with mounting 
-database volume._
+database volume (or run the terminal as administrator)._
 
 5. Find your bot using Telegram search, click 
 ```START``` button and enjoy!
@@ -65,19 +65,22 @@ containers and networks if needed._
 1. Select the language you are learning and your native 
 language by typing language codes:
 
-```
-It
-
-En
-```
+_For example:_ ```It``` _and then:_ ```En```
 
 2. Add words by clicking ```add```.
 
 3. Remove words by clicking ```remove```.
 
-4. Start quiz by clicking ```quiz```.
+4. Start quiz by clicking ```quiz```. Choose the 
+correct answer from four possible. The quiz goes on 
+repeatedly. You can return to menu by clicking ```menu```.
 
 5. See your stats by clicking ```stats```.
+
+6. You can get back to initial settings by 
+typing ```/start```. After choosing the languages you 
+will be asked if you want to reset the database 
+(delete user words/stats).
 
 ## Contributing
 
