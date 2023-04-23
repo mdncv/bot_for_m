@@ -85,3 +85,7 @@ will be asked if you want to reset the database
 ## Contributing
 
 Bug reports and/or pull requests are welcome :)
+
+## License
+
+[MIT License](LICENSE.txt)
